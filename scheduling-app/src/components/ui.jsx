@@ -70,6 +70,10 @@ export function AvatarStack({ people, size = 28, overlap = 8 }) {
 }
 
 import { useState, useEffect } from 'react';
+import iconWhite from '../assets/logo-icon-white.png';
+import iconBlue from '../assets/logo-icon-blue.png';
+import wordWhite from '../assets/logo-word-white.png';
+import wordBlue from '../assets/logo-word-blue.png';
 
 export function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < breakpoint);
@@ -83,29 +87,23 @@ export function useIsMobile(breakpoint = 768) {
 }
 
 export function RoiLogo({ color = '#fff', size = 18 }) {
+  const white = color === '#fff' || color === 'white';
+  const height = size * 1.2;
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, color }}>
-      <RoiIconMark color={color} size={size * 1.4} />
-      <span style={{
-        fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontStyle: 'italic',
-        fontSize: size, letterSpacing: '-0.02em', lineHeight: 1, color,
-      }}>The ROI Guys</span>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <img src={white ? iconWhite : iconBlue} alt="" aria-hidden="true"
+        style={{ height, width: 'auto', display: 'block' }} />
+      <img src={white ? wordWhite : wordBlue} alt="The ROI Guys"
+        style={{ height: height * 0.65, width: 'auto', display: 'block' }} />
     </span>
   );
 }
 
 export function RoiIconMark({ color = '#fff', size = 22 }) {
-  const w = Math.round(size * 1.7);
+  const white = color === '#fff' || color === 'white';
   return (
-    <svg width={w} height={size} viewBox="0 0 85 50" fill="none" aria-hidden="true">
-      {/* House silhouette: chimney upper-left, asymmetric roof, door notch at base */}
-      <path
-        d="M15 2 L23 2 L23 20 L65 28 L65 46 L44 46 L44 36 L30 36 L30 46 L8 46 L8 30 L4 30 L15 18 Z"
-        fill={color}
-      />
-      {/* Ground sweep extending full width, beyond the house footprint */}
-      <rect x="0" y="43" width="69" height="5" rx="2.5" fill={color} />
-    </svg>
+    <img src={white ? iconWhite : iconBlue} alt="" aria-hidden="true"
+      style={{ width: 'auto', height: size, display: 'block', opacity: 0.9 }} />
   );
 }
 
