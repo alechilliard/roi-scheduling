@@ -62,16 +62,16 @@ export function useGoogleAuth() {
   return { signedIn, loading, error, signIn, signOut };
 }
 
-export function GoogleAuthButton({ signedIn, loading, error, onSignIn, onSignOut }) {
+export function GoogleAuthButton({ signedIn, loading, error, onSignIn, onSignOut, compact = false }) {
   if (signedIn) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: compact ? 6 : 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <span style={{ width: 7, height: 7, borderRadius: 4, background: '#1BA86B', display: 'inline-block' }} />
-          <span style={{
+          {!compact && <span style={{
             fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: 600,
             color: 'rgba(255,255,255,0.9)', whiteSpace: 'nowrap',
-          }}>Calendar syncing</span>
+          }}>Calendar syncing</span>}
         </div>
         <button onClick={onSignOut} style={{
           fontSize: 12, color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none',
@@ -83,15 +83,15 @@ export function GoogleAuthButton({ signedIn, loading, error, onSignIn, onSignOut
   return (
     <div>
       <button onClick={onSignIn} disabled={loading} style={{
-        display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 0',
+        display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 0',
         background: 'none', border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-        fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600, fontSize: 13,
+        fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600, fontSize: compact ? 11 : 13,
         color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap', opacity: loading ? 0.6 : 1,
       }}>
-        <GoogleIcon size={14} />
-        {loading ? 'Connecting…' : 'Connect Google Calendar'}
+        <GoogleIcon size={compact ? 12 : 14} />
+        {compact ? 'Connect' : (loading ? 'Connecting…' : 'Connect Google Calendar')}
       </button>
-      {error && <div style={{ fontSize: 11, color: '#F7A521', marginTop: 4 }}>{error}</div>}
+      {error && !compact && <div style={{ fontSize: 11, color: '#F7A521', marginTop: 4 }}>{error}</div>}
     </div>
   );
 }

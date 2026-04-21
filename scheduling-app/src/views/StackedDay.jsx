@@ -1,11 +1,12 @@
 import { useState, useMemo, useRef } from 'react';
 import { TEAM, APPT_TYPE, DAY_START, DAY_END, fmtTime, fmtRange, buildWeek, seedAppointments } from '../data/index.js';
-import { RoiButton, Eyebrow, Avatar, RoiLogo, Icon } from '../components/ui.jsx';
+import { RoiButton, Eyebrow, Avatar, RoiLogo, Icon, useIsMobile } from '../components/ui.jsx';
 import { BookingModal } from '../components/BookingModal.jsx';
 
 const HOUR_PX = 96;
 
 export function StackedDay() {
+  const isMobile = useIsMobile();
   const week = useMemo(() => buildWeek(new Date('2026-04-22')), []);
   const todayKey = week[2].key;
   const [dayKey, setDayKey] = useState(todayKey);
@@ -30,104 +31,139 @@ export function StackedDay() {
   const del = (id) => { setAppts(prev => prev.filter(a => a.id !== id)); setModal({ open: false, draft: null }); };
 
   const cols = TEAM.filter(p => visible.has(p.id));
+  const hourPx = isMobile ? 60 : HOUR_PX;
+  const mobileTotal = ((DAY_END - DAY_START) / 60) * hourPx;
 
   return (
     <div style={{ minHeight: '100vh', background: '#F1F1F1', fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#111' }}>
       <div style={{ display: 'flex', minHeight: '100vh' }}>
-        {/* Sidebar */}
-        <aside style={{
-          width: 240, background: '#fff', borderRight: '1px solid #E9E9E9',
-          padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24, flexShrink: 0,
-        }}>
-          <RoiLogo color="#0054D4" size={16} />
+        {/* Sidebar — desktop only */}
+        {!isMobile && (
+          <aside style={{
+            width: 240, background: '#fff', borderRight: '1px solid #E9E9E9',
+            padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24, flexShrink: 0,
+          }}>
+            <RoiLogo color="#0054D4" size={16} />
 
-          <div>
-            <Eyebrow>Navigation</Eyebrow>
-            <div style={{ display: 'flex', flexDirection: 'column', marginTop: 10, gap: 2 }}>
-              {[
-                { icon: 'calendar', label: 'Schedule', active: true },
-                { icon: 'users',    label: 'Team' },
-                { icon: 'home',     label: 'Properties' },
-                { icon: 'sparkle',  label: 'Reports' },
-              ].map(n => (
-                <button key={n.label} style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
-                  borderRadius: 10, border: 0, cursor: 'pointer',
-                  background: n.active ? '#E6F0FC' : 'transparent',
-                  color: n.active ? '#0054D4' : '#3A3A3A',
-                  fontFamily: 'inherit', fontWeight: 600, fontSize: 14, textAlign: 'left',
-                }}>
-                  <Icon name={n.icon} size={18} />{n.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Eyebrow>Agents</Eyebrow>
-            <div style={{ display: 'flex', flexDirection: 'column', marginTop: 10, gap: 6 }}>
-              {TEAM.map(p => {
-                const on = visible.has(p.id);
-                return (
-                  <button key={p.id} onClick={() => {
-                    const next = new Set(visible);
-                    on ? next.delete(p.id) : next.add(p.id);
-                    if (next.size === 0) return;
-                    setVisible(next);
-                  }} style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px',
+            <div>
+              <Eyebrow>Navigation</Eyebrow>
+              <div style={{ display: 'flex', flexDirection: 'column', marginTop: 10, gap: 2 }}>
+                {[
+                  { icon: 'calendar', label: 'Schedule', active: true },
+                  { icon: 'users',    label: 'Team' },
+                  { icon: 'home',     label: 'Properties' },
+                  { icon: 'sparkle',  label: 'Reports' },
+                ].map(n => (
+                  <button key={n.label} style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
                     borderRadius: 10, border: 0, cursor: 'pointer',
-                    background: 'transparent', opacity: on ? 1 : 0.4,
-                    fontFamily: 'inherit', textAlign: 'left',
+                    background: n.active ? '#E6F0FC' : 'transparent',
+                    color: n.active ? '#0054D4' : '#3A3A3A',
+                    fontFamily: 'inherit', fontWeight: 600, fontSize: 14, textAlign: 'left',
                   }}>
-                    <div style={{
-                      width: 14, height: 14, borderRadius: 4,
-                      background: on ? `hsl(${p.hue}, 68%, 55%)` : '#fff',
-                      border: `2px solid hsl(${p.hue}, 68%, 55%)`,
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-                    }}>{on && <Icon name="check" size={10} color="#fff" />}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{p.name}</div>
-                      <div style={{ fontSize: 10, color: '#6B6B6B', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>{p.role}</div>
-                    </div>
+                    <Icon name={n.icon} size={18} />{n.label}
                   </button>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div style={{ flex: 1 }} />
-          <RoiButton variant="primary" icon={<Icon name="plus" size={16} />}
-            onClick={() => openNew(dayKey, 10 * 60)}>New appt</RoiButton>
-        </aside>
+            <div>
+              <Eyebrow>Agents</Eyebrow>
+              <div style={{ display: 'flex', flexDirection: 'column', marginTop: 10, gap: 6 }}>
+                {TEAM.map(p => {
+                  const on = visible.has(p.id);
+                  return (
+                    <button key={p.id} onClick={() => {
+                      const next = new Set(visible);
+                      on ? next.delete(p.id) : next.add(p.id);
+                      if (next.size === 0) return;
+                      setVisible(next);
+                    }} style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px',
+                      borderRadius: 10, border: 0, cursor: 'pointer',
+                      background: 'transparent', opacity: on ? 1 : 0.4,
+                      fontFamily: 'inherit', textAlign: 'left',
+                    }}>
+                      <div style={{
+                        width: 14, height: 14, borderRadius: 4,
+                        background: on ? `hsl(${p.hue}, 68%, 55%)` : '#fff',
+                        border: `2px solid hsl(${p.hue}, 68%, 55%)`,
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                      }}>{on && <Icon name="check" size={10} color="#fff" />}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{p.name}</div>
+                        <div style={{ fontSize: 10, color: '#6B6B6B', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>{p.role}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ flex: 1 }} />
+            <RoiButton variant="primary" icon={<Icon name="plus" size={16} />}
+              onClick={() => openNew(dayKey, 10 * 60)}>New appt</RoiButton>
+          </aside>
+        )}
 
         {/* Main */}
         <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          {/* Mobile header */}
+          {isMobile && (
+            <div style={{ background: '#fff', padding: '12px 16px', borderBottom: '1px solid #E9E9E9', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <RoiLogo color="#0054D4" size={14} />
+              <div style={{ flex: 1 }} />
+              {/* Agent filter dots */}
+              <div style={{ display: 'flex', gap: 6 }}>
+                {TEAM.map(p => {
+                  const on = visible.has(p.id);
+                  return (
+                    <button key={p.id} onClick={() => {
+                      const next = new Set(visible);
+                      on ? next.delete(p.id) : next.add(p.id);
+                      if (next.size === 0) return;
+                      setVisible(next);
+                    }} title={p.name} style={{
+                      width: 28, height: 28, borderRadius: 14, border: 0, cursor: 'pointer',
+                      background: on ? `hsl(${p.hue}, 68%, 55%)` : '#E9E9E9',
+                      opacity: on ? 1 : 0.5,
+                      fontFamily: 'inherit', fontWeight: 800, fontStyle: 'italic',
+                      fontSize: 11, color: '#fff',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    }}>{p.initials}</button>
+                  );
+                })}
+              </div>
+              <RoiButton variant="primary" size="sm" icon={<Icon name="plus" size={13} />}
+                onClick={() => openNew(dayKey, 10 * 60)}>New</RoiButton>
+            </div>
+          )}
+
           {/* Topbar */}
           <div style={{
-            padding: '22px 32px', background: '#fff', borderBottom: '1px solid #E9E9E9',
-            display: 'flex', alignItems: 'flex-end', gap: 28, justifyContent: 'space-between',
+            padding: isMobile ? '12px 16px' : '22px 32px', background: '#fff', borderBottom: '1px solid #E9E9E9',
+            display: 'flex', alignItems: isMobile ? 'center' : 'flex-end', gap: isMobile ? 12 : 28, justifyContent: 'space-between',
           }}>
             <div>
-              <Eyebrow>{dayObj.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</Eyebrow>
+              {!isMobile && <Eyebrow>{dayObj.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</Eyebrow>}
               <h1 style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontStyle: 'italic',
-                fontSize: 44, letterSpacing: '-0.03em', lineHeight: 1, margin: '6px 0 0',
+                fontSize: isMobile ? 22 : 44, letterSpacing: '-0.03em', lineHeight: 1, margin: isMobile ? 0 : '6px 0 0',
               }}>
-                {dayObj.date.toLocaleDateString('en-US', { weekday: 'long' })},
+                {dayObj.date.toLocaleDateString('en-US', { weekday: isMobile ? 'short' : 'long' })},
                 <span style={{ color: '#0054D4' }}> {dayObj.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
               </h1>
             </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: isMobile ? 6 : 10, alignItems: 'center' }}>
               <button onClick={() => {
                 const i = week.findIndex(w => w.key === dayKey);
                 if (i > 0) setDayKey(week[i - 1].key);
               }} style={navBtnStyle}><Icon name="chevron-left" size={18} /></button>
-              <button onClick={() => setDayKey(todayKey)} style={{
+              {!isMobile && <button onClick={() => setDayKey(todayKey)} style={{
                 padding: '10px 16px', borderRadius: 10, border: '1px solid #E9E9E9',
                 background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700,
                 fontSize: 13, color: '#111', letterSpacing: '0.04em',
-              }}>Today</button>
+              }}>Today</button>}
               <button onClick={() => {
                 const i = week.findIndex(w => w.key === dayKey);
                 if (i < week.length - 1) setDayKey(week[i + 1].key);
@@ -136,22 +172,23 @@ export function StackedDay() {
           </div>
 
           {/* Week strip */}
-          <div style={{ padding: '12px 32px', background: '#fff', borderBottom: '1px solid #F1F1F1' }}>
-            <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ padding: isMobile ? '8px 12px' : '12px 32px', background: '#fff', borderBottom: '1px solid #F1F1F1' }}>
+            <div style={{ display: 'flex', gap: isMobile ? 4 : 8, overflowX: isMobile ? 'auto' : 'visible' }}>
               {week.map(d => {
                 const active = d.key === dayKey;
                 const dayCount = appts.filter(a => a.dayKey === d.key && visible.has(a.personId)).length;
                 return (
                   <button key={d.key} onClick={() => setDayKey(d.key)} style={{
-                    flex: 1, padding: '10px 14px', borderRadius: 12,
+                    flex: isMobile ? '0 0 auto' : 1, padding: isMobile ? '7px 10px' : '10px 14px', borderRadius: 12,
                     border: `1.5px solid ${active ? '#0054D4' : '#F1F1F1'}`,
                     background: active ? '#0054D4' : '#fff', color: active ? '#fff' : '#111',
                     cursor: 'pointer', fontFamily: 'inherit',
-                    display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between',
+                    display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, justifyContent: 'space-between',
+                    minWidth: isMobile ? 64 : undefined,
                   }}>
                     <div style={{ textAlign: 'left' }}>
-                      <div style={{ fontSize: 10, letterSpacing: '0.14em', fontWeight: 600, textTransform: 'uppercase', opacity: 0.8 }}>{d.dow}</div>
-                      <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontStyle: 'italic', fontSize: 22, letterSpacing: '-0.02em' }}>{d.dayNum}</div>
+                      <div style={{ fontSize: 10, letterSpacing: '0.12em', fontWeight: 600, textTransform: 'uppercase', opacity: 0.8 }}>{d.dow}</div>
+                      <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontStyle: 'italic', fontSize: isMobile ? 16 : 22, letterSpacing: '-0.02em' }}>{d.dayNum}</div>
                     </div>
                     <div style={{
                       fontSize: 11, fontWeight: 700,
@@ -166,18 +203,21 @@ export function StackedDay() {
           </div>
 
           {/* Day calendar */}
-          <div style={{ flex: 1, overflow: 'auto', padding: '20px 32px 64px' }}>
+          <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? '12px 12px 80px' : '20px 32px 64px' }}>
             <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 2px 6px rgba(17,17,17,0.06)', overflow: 'hidden' }}>
               {/* Column headers */}
               <div style={{ display: 'flex', borderBottom: '1px solid #F1F1F1' }}>
-                <div style={{ width: 72, flexShrink: 0 }} />
+                <div style={{ width: isMobile ? 44 : 72, flexShrink: 0 }} />
                 {cols.map(p => (
-                  <div key={p.id} style={{ flex: 1, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, borderLeft: '1px solid #F1F1F1' }}>
-                    <Avatar person={p} size={32} />
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{p.name}</div>
-                      <div style={{ fontSize: 10, color: '#6B6B6B', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>{p.role}</div>
-                    </div>
+                  <div key={p.id} style={{ flex: 1, padding: isMobile ? '10px 8px' : '14px 16px', display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, borderLeft: '1px solid #F1F1F1' }}>
+                    <Avatar person={p} size={isMobile ? 24 : 32} />
+                    {!isMobile && (
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{p.name}</div>
+                        <div style={{ fontSize: 10, color: '#6B6B6B', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>{p.role}</div>
+                      </div>
+                    )}
+                    {isMobile && <div style={{ fontWeight: 700, fontSize: 12, color: '#111' }}>{p.name.split(' ')[0]}</div>}
                   </div>
                 ))}
               </div>
@@ -185,11 +225,11 @@ export function StackedDay() {
               {/* Grid */}
               <div style={{ display: 'flex', position: 'relative' }}>
                 {/* Hours rail */}
-                <div style={{ width: 72, flexShrink: 0 }}>
+                <div style={{ width: isMobile ? 44 : 72, flexShrink: 0 }}>
                   {Array.from({ length: (DAY_END - DAY_START) / 60 }, (_, i) => (
                     <div key={i} style={{
-                      height: HOUR_PX, padding: '6px 10px', textAlign: 'right',
-                      fontSize: 11, fontWeight: 600, color: '#6B6B6B', letterSpacing: '0.04em',
+                      height: hourPx, padding: isMobile ? '4px 6px' : '6px 10px', textAlign: 'right',
+                      fontSize: isMobile ? 10 : 11, fontWeight: 600, color: '#6B6B6B', letterSpacing: '0.04em',
                       fontVariantNumeric: 'tabular-nums', borderTop: i === 0 ? 'none' : '1px solid #F1F1F1',
                     }}>{fmtTime(DAY_START + i * 60)}</div>
                   ))}
@@ -197,7 +237,7 @@ export function StackedDay() {
 
                 {/* Per-person columns */}
                 {cols.map(p => (
-                  <DayColumn key={p.id} person={p} hourPx={HOUR_PX} totalHeight={totalHeight}
+                  <DayColumn key={p.id} person={p} hourPx={hourPx} totalHeight={isMobile ? mobileTotal : totalHeight}
                     appts={dayAppts.filter(a => a.personId === p.id)}
                     onEdit={openEdit} onEmpty={t => openNew(dayKey, t)} />
                 ))}
@@ -205,29 +245,31 @@ export function StackedDay() {
             </div>
 
             {/* Summary footer */}
-            <div style={{ marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              {cols.map(p => {
-                const mine = dayAppts.filter(a => a.personId === p.id);
-                const hours = mine.reduce((s, a) => s + (a.end - a.start), 0) / 60;
-                return (
-                  <div key={p.id} style={{
-                    padding: '14px 18px', background: '#fff', borderRadius: 12, flex: '1 1 220px',
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    borderLeft: `4px solid hsl(${p.hue}, 68%, 55%)`,
-                  }}>
-                    <Avatar person={p} size={36} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700 }}>{p.name}</div>
-                      <div style={{ fontSize: 11, color: '#6B6B6B', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{mine.length} appts · {hours.toFixed(1)}h</div>
+            {!isMobile && (
+              <div style={{ marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                {cols.map(p => {
+                  const mine = dayAppts.filter(a => a.personId === p.id);
+                  const hours = mine.reduce((s, a) => s + (a.end - a.start), 0) / 60;
+                  return (
+                    <div key={p.id} style={{
+                      padding: '14px 18px', background: '#fff', borderRadius: 12, flex: '1 1 220px',
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      borderLeft: `4px solid hsl(${p.hue}, 68%, 55%)`,
+                    }}>
+                      <Avatar person={p} size={36} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700 }}>{p.name}</div>
+                        <div style={{ fontSize: 11, color: '#6B6B6B', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{mine.length} appts · {hours.toFixed(1)}h</div>
+                      </div>
+                      <div style={{
+                        fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontStyle: 'italic',
+                        fontSize: 28, color: '#0054D4', letterSpacing: '-0.02em',
+                      }}>{mine.filter(a => a.type === 'walkthrough').length}</div>
                     </div>
-                    <div style={{
-                      fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontStyle: 'italic',
-                      fontSize: 28, color: '#0054D4', letterSpacing: '-0.02em',
-                    }}>{mine.filter(a => a.type === 'walkthrough').length}</div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </main>
       </div>

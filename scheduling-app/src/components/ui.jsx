@@ -69,6 +69,19 @@ export function AvatarStack({ people, size = 28, overlap = 8 }) {
   );
 }
 
+import { useState, useEffect } from 'react';
+
+export function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < breakpoint);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    const handler = e => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 export function RoiLogo({ color = '#fff', size = 18 }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, color }}>
@@ -82,11 +95,16 @@ export function RoiLogo({ color = '#fff', size = 18 }) {
 }
 
 export function RoiIconMark({ color = '#fff', size = 22 }) {
+  const w = Math.round(size * 1.7);
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <path d="M4 18 L16 4 L28 18" stroke={color} strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M7 26 L25 26" stroke={color} strokeWidth="3.2" strokeLinecap="round" />
-      <path d="M11 22 L21 22" stroke={color} strokeWidth="3.2" strokeLinecap="round" opacity="0.55" />
+    <svg width={w} height={size} viewBox="0 0 85 50" fill="none" aria-hidden="true">
+      {/* House silhouette: chimney upper-left, asymmetric roof, door notch at base */}
+      <path
+        d="M15 2 L23 2 L23 20 L65 28 L65 46 L44 46 L44 36 L30 36 L30 46 L8 46 L8 30 L4 30 L15 18 Z"
+        fill={color}
+      />
+      {/* Ground sweep extending full width, beyond the house footprint */}
+      <rect x="0" y="43" width="69" height="5" rx="2.5" fill={color} />
     </svg>
   );
 }

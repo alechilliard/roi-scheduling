@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { TEAM, APPT_TYPE, DAY_START, DAY_END, fmtTime, fmtRange, buildWeek, seedAppointments, findFreeSlots, busyFor } from '../data/index.js';
-import { RoiButton, Eyebrow, Avatar, AvatarStack, RoiLogo, RoiIconMark, Icon } from '../components/ui.jsx';
+import { RoiButton, Eyebrow, Avatar, AvatarStack, RoiLogo, RoiIconMark, Icon, useIsMobile } from '../components/ui.jsx';
 import { BookingModal } from '../components/BookingModal.jsx';
 
 export function FindTime() {
+  const isMobile = useIsMobile();
   const week = useMemo(() => buildWeek(new Date('2026-04-22')), []);
   const todayKey = week[2].key;
   const [appts, setAppts] = useState(() => seedAppointments(week.map(w => w.key)));
@@ -56,35 +57,42 @@ export function FindTime() {
     <div style={{ minHeight: '100vh', background: '#F1F1F1', fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#111' }}>
       <header style={{
         background: 'linear-gradient(135deg, #009EE9 0%, #0054D4 100%)',
-        color: '#fff', padding: '20px 32px 48px', position: 'relative', overflow: 'hidden',
+        color: '#fff', padding: isMobile ? '14px 16px 20px' : '20px 32px 48px', position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', right: -80, top: -40, opacity: 0.08, pointerEvents: 'none' }}>
-          <RoiIconMark color="#fff" size={420} />
-        </div>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 20, position: 'relative' }}>
-          <RoiLogo color="#fff" size={18} />
+        {!isMobile && (
+          <div style={{ position: 'absolute', right: -80, top: -40, opacity: 0.08, pointerEvents: 'none' }}>
+            <RoiIconMark color="#fff" size={420} />
+          </div>
+        )}
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 16, position: 'relative' }}>
+          <RoiLogo color="#fff" size={isMobile ? 14 : 18} />
           <div style={{ flex: 1 }} />
-          <button style={{ background: 'rgba(255,255,255,0.18)', border: 0, padding: '8px 14px', borderRadius: 999, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: 13 }}>Schedule</button>
-          <Avatar person={TEAM[0]} size={36} style={{ boxShadow: '0 0 0 2px rgba(255,255,255,0.4)' }} />
+          {!isMobile && <button style={{ background: 'rgba(255,255,255,0.18)', border: 0, padding: '8px 14px', borderRadius: 999, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: 13 }}>Schedule</button>}
+          <Avatar person={TEAM[0]} size={isMobile ? 30 : 36} style={{ boxShadow: '0 0 0 2px rgba(255,255,255,0.4)' }} />
         </div>
 
-        <div style={{ maxWidth: 1200, margin: '36px auto 0', position: 'relative' }}>
+        <div style={{ maxWidth: 1200, margin: isMobile ? '12px auto 0' : '36px auto 0', position: 'relative' }}>
           <Eyebrow color="rgba(255,255,255,0.85)">Find a Time · The ROI Guys</Eyebrow>
           <h1 style={{
             fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontStyle: 'italic',
-            fontSize: 72, letterSpacing: '-0.03em', lineHeight: 0.95, margin: '8px 0 0', color: '#fff',
-          }}>When is the team<br /><span style={{ color: '#F7A521' }}>actually free?</span></h1>
-          <p style={{ marginTop: 14, fontSize: 17, maxWidth: 620, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>
-            Pick agents, pick a day, pick a duration. We&apos;ll show every window that works.
-          </p>
+            fontSize: isMobile ? 32 : 72, letterSpacing: '-0.03em', lineHeight: 1, margin: '6px 0 0', color: '#fff',
+          }}>
+            {isMobile ? 'When is the team ' : 'When is the team\n'}
+            <span style={{ color: '#F7A521' }}>actually free?</span>
+          </h1>
+          {!isMobile && (
+            <p style={{ marginTop: 14, fontSize: 17, maxWidth: 620, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>
+              Pick agents, pick a day, pick a duration. We&apos;ll show every window that works.
+            </p>
+          )}
         </div>
 
         {/* Search card */}
         <div style={{
-          maxWidth: 1200, margin: '36px auto 0', background: '#fff', borderRadius: 20,
-          boxShadow: '0 20px 60px rgba(0, 32, 76, 0.25)', padding: 24, position: 'relative', zIndex: 5,
+          maxWidth: 1200, margin: isMobile ? '16px auto 0' : '36px auto 0', background: '#fff', borderRadius: isMobile ? 16 : 20,
+          boxShadow: '0 20px 60px rgba(0, 32, 76, 0.25)', padding: isMobile ? 16 : 24, position: 'relative', zIndex: 5,
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.8fr auto', gap: 20, alignItems: 'flex-end' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr 0.8fr auto', gap: isMobile ? 14 : 20, alignItems: 'flex-end' }}>
             <div>
               <FieldLabel>Who</FieldLabel>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -134,26 +142,29 @@ export function FindTime() {
               </div>
             </div>
 
-            <RoiButton variant="gold" icon={<Icon name="sparkle" size={16} />} size="lg">Search</RoiButton>
+            {isMobile
+              ? <RoiButton variant="gold" icon={<Icon name="sparkle" size={14} />} size="sm" style={{ width: '100%', justifyContent: 'center' }}>Find Windows</RoiButton>
+              : <RoiButton variant="gold" icon={<Icon name="sparkle" size={16} />} size="lg">Search</RoiButton>
+            }
           </div>
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
+          <div style={{ display: 'flex', gap: isMobile ? 6 : 8, marginTop: isMobile ? 12 : 18, overflowX: isMobile ? 'auto' : 'visible' }}>
             {week.map(d => {
               const active = d.key === dayKey;
               const count = appts.filter(a => a.dayKey === d.key && selected.has(a.personId)).length;
               return (
                 <button key={d.key} onClick={() => setDayKey(d.key)} style={{
-                  flex: 1, padding: '12px 10px', borderRadius: 12,
+                  flex: isMobile ? '0 0 auto' : 1, padding: isMobile ? '8px 10px' : '12px 10px', borderRadius: 12,
                   border: `1.5px solid ${active ? '#0054D4' : '#F1F1F1'}`,
                   background: active ? '#E6F0FC' : '#fff',
-                  cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                  cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', minWidth: isMobile ? 56 : undefined,
                 }}>
-                  <div style={{ fontSize: 10, letterSpacing: '0.14em', fontWeight: 600, textTransform: 'uppercase', color: active ? '#0054D4' : '#6B6B6B' }}>
-                    {d.dow}{d.key === todayKey ? ' · today' : ''}
+                  <div style={{ fontSize: 10, letterSpacing: '0.12em', fontWeight: 600, textTransform: 'uppercase', color: active ? '#0054D4' : '#6B6B6B' }}>
+                    {d.dow}{!isMobile && d.key === todayKey ? ' · today' : ''}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 2 }}>
-                    <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontStyle: 'italic', fontSize: 26, letterSpacing: '-0.02em', color: active ? '#0054D4' : '#111' }}>{d.dayNum}</div>
-                    <div style={{ fontSize: 11, color: '#6B6B6B', fontWeight: 600 }}>{count} booked</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+                    <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontStyle: 'italic', fontSize: isMobile ? 18 : 26, letterSpacing: '-0.02em', color: active ? '#0054D4' : '#111' }}>{d.dayNum}</div>
+                    {!isMobile && <div style={{ fontSize: 11, color: '#6B6B6B', fontWeight: 600 }}>{count} booked</div>}
                   </div>
                 </button>
               );
@@ -162,7 +173,7 @@ export function FindTime() {
         </div>
       </header>
 
-      <main style={{ maxWidth: 1200, margin: '32px auto 0', padding: '0 32px 80px' }}>
+      <main style={{ maxWidth: 1200, margin: isMobile ? '16px auto 0' : '32px auto 0', padding: isMobile ? '0 12px 80px' : '0 32px 80px' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
           <div>
             <Eyebrow>Free windows · {dayObj.date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</Eyebrow>
