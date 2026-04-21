@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ROI Guys · Team Scheduling — Design Explorations</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="assets/colors_and_type.css" />
+<style>
+  html, body { margin: 0; padding: 0; }
+  #root { height: 100vh; }
+  /* suppress artboard card scrollbars, keep scroll usable */
+  .dc-card::-webkit-scrollbar { width: 6px; height: 6px; }
+  .dc-card::-webkit-scrollbar-thumb { background: #D9D9D9; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="shared/data.jsx"></script>
+<script type="text/babel" src="shared/ui.jsx"></script>
+<script type="text/babel" src="shared/booking-modal.jsx"></script>
+<script type="text/babel" src="variants/a-team-rows.jsx"></script>
+<script type="text/babel" src="variants/b-stacked-day.jsx"></script>
+<script type="text/babel" src="variants/c-find-time.jsx"></script>
+<script type="text/babel" src="assets/design-canvas.jsx"></script>
+
+<script type="text/babel">
+function ArtboardScale({ width, height, children }) {
+  // Scale each prototype into an artboard-sized frame so the canvas previews
+  // the full app at a glance. Inner app renders at fixed width; wrapper scales
+  // it to the artboard.
+  const innerW = 1440;
+  const scale = width / innerW;
+  return (
+    <div style={{ width, height, overflow: 'hidden', background: '#fff', position: 'relative' }}>
+      <div style={{
+        width: innerW, height: height / scale,
+        transform: `scale(${scale})`, transformOrigin: 'top left',
+        overflow: 'auto',
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const W = 1200, H = 780;
+  return (
+    <DesignCanvas>
+      <DCSection id="prototypes" title="Team Scheduling · 3 directions"
+        subtitle="Click any artboard label or ⤢ to focus fullscreen. All three share the same booking modal, brand palette & seed data.">
+        <DCArtboard id="rows" label="A · Team Rows (timeline)" width={W} height={H}>
+          <ArtboardScale width={W} height={H}><TeamRowsApp /></ArtboardScale>
+        </DCArtboard>
+        <DCArtboard id="stacked" label="B · Stacked Day (per-agent columns)" width={W} height={H}>
+          <ArtboardScale width={W} height={H}><StackedDayApp /></ArtboardScale>
+        </DCArtboard>
+        <DCArtboard id="find" label="C · Find a Time (booking-first)" width={W} height={H}>
+          <ArtboardScale width={W} height={H}><FindTimeApp /></ArtboardScale>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
