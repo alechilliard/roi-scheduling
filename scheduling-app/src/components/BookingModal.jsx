@@ -7,18 +7,25 @@ import { TEAM } from '../data/index.js';
 const MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY || '';
 
 let _mapsLoaded = false;
+let _mapsFailed = false;
 let _mapsLoading = null;
+
+// Suppress the Google Maps "this page can't load" alert by intercepting it
+// before the script loads. Google fires window.gm_authFailure on key errors.
+window.gm_authFailure = () => { _mapsFailed = true; };
 
 function loadMapsApi() {
   if (_mapsLoaded) return Promise.resolve();
+  if (_mapsFailed) return Promise.reject(new Error('Maps API key not authorized'));
   if (_mapsLoading) return _mapsLoading;
-  _mapsLoading = new Promise((resolve, reject) => {
+  _mapsLoading = new Promise((resolve) => {
     if (!MAPS_API_KEY) { resolve(); return; }
     const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&libraries=places`;
+    // callback=__mapsReady suppresses the auth-failure popup in newer SDK versions
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&libraries=places&callback=__mapsReady`;
     s.async = true;
-    s.onload = () => { _mapsLoaded = true; resolve(); };
-    s.onerror = reject;
+    window.__mapsReady = () => { _mapsLoaded = true; resolve(); };
+    s.onerror = () => { _mapsFailed = true; resolve(); }; // resolve (not reject) so we degrade gracefully
     document.head.appendChild(s);
   });
   return _mapsLoading;
@@ -309,8 +316,8 @@ function AddressAutocomplete({ value, onChange }) {
   useEffect(() => {
     if (!MAPS_API_KEY) return;
     let autocomplete;
-    loadMapsApi().then(() => {
-      if (!inputRef.current || !window.google?.maps?.places) return;
+    loadMapsApi().catch(() => {}).then(() => {
+      if (!inputRef.current || !window.google?.maps?.places || _mapsFailed) return;
       autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
         types: ['address'],
         componentRestrictions: { country: 'us' },
@@ -348,8 +355,8 @@ function AddressAutocomplete({ value, onChange }) {
         value={localValue}
         onChange={e => {
           setLocalValue(e.target.value);
-          // Let the user type freely; autocomplete will fire onChange on selection
-          if (!MAPS_API_KEY) onChange({ address: e.target.value, city: '' });
+          // When Maps isn't available, propagate every keystroke
+          if (!MAPS_API_KEY || _mapsFailed) onChange({ address: e.target.value, city: '' });
         }}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
