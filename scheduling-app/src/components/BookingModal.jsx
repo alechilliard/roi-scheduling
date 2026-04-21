@@ -315,9 +315,10 @@ function AddressAutocomplete({ value, onChange }) {
 
   useEffect(() => {
     if (!MAPS_API_KEY) return;
+    let cancelled = false;
     let autocomplete;
     loadMapsApi().catch(() => {}).then(() => {
-      if (!inputRef.current || !window.google?.maps?.places || _mapsFailed) return;
+      if (cancelled || !inputRef.current || !window.google?.maps?.places || _mapsFailed) return;
       autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
         types: ['address'],
         componentRestrictions: { country: 'us' },
@@ -335,6 +336,7 @@ function AddressAutocomplete({ value, onChange }) {
       });
     });
     return () => {
+      cancelled = true;
       if (autocomplete) window.google?.maps?.event?.clearInstanceListeners(autocomplete);
     };
   }, []);

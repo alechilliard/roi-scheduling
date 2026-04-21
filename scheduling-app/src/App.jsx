@@ -10,6 +10,11 @@ const VIEWS = [
   { id: 'find',    label: 'C · Find a Time' },
 ];
 
+const PILL_STYLE = {
+  background: 'rgba(17, 17, 17, 0.88)', backdropFilter: 'blur(12px)',
+  borderRadius: 999, boxShadow: '0 8px 32px rgba(0,0,0,0.32)',
+};
+
 export default function App() {
   const [view, setView] = useState('rows');
   const auth = useGoogleAuth();
@@ -22,12 +27,7 @@ export default function App() {
         zIndex: 200, display: 'flex', alignItems: 'center', gap: 8,
       }}>
         {/* View switcher pill */}
-        <div style={{
-          display: 'flex', gap: 4,
-          background: 'rgba(17, 17, 17, 0.88)', backdropFilter: 'blur(12px)',
-          borderRadius: 999, padding: '6px 8px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.32)',
-        }}>
+        <div style={{ ...PILL_STYLE, display: 'flex', gap: 4, padding: '6px 8px' }}>
           {VIEWS.map(v => {
             const active = view === v.id;
             return (
@@ -47,11 +47,7 @@ export default function App() {
         </div>
 
         {/* Google Calendar auth pill */}
-        <div style={{
-          background: 'rgba(17, 17, 17, 0.88)', backdropFilter: 'blur(12px)',
-          borderRadius: 999, padding: '6px 14px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.32)',
-        }}>
+        <div style={{ ...PILL_STYLE, padding: '6px 14px' }}>
           <GoogleAuthButton
             signedIn={auth.signedIn}
             loading={auth.loading}
