@@ -66,26 +66,32 @@ export function GoogleAuthButton({ signedIn, loading, error, onSignIn, onSignOut
   if (signedIn) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px',
-          background: '#E6F0FC', borderRadius: 999, fontSize: 12, fontWeight: 600, color: '#0054D4',
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <span style={{ width: 7, height: 7, borderRadius: 4, background: '#1BA86B', display: 'inline-block' }} />
-          Calendar syncing
+          <span style={{
+            fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: 600,
+            color: 'rgba(255,255,255,0.9)', whiteSpace: 'nowrap',
+          }}>Calendar syncing</span>
         </div>
         <button onClick={onSignOut} style={{
-          fontSize: 12, color: '#6B6B6B', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-        }}>Disconnect</button>
+          fontSize: 12, color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none',
+          cursor: 'pointer', fontFamily: 'inherit', padding: 0,
+        }}>✕</button>
       </div>
     );
   }
   return (
     <div>
-      <RoiButton variant="ghost" size="sm" onClick={onSignIn} disabled={loading}
-        icon={<GoogleIcon size={14} />}>
+      <button onClick={onSignIn} disabled={loading} style={{
+        display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 0',
+        background: 'none', border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
+        fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600, fontSize: 13,
+        color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap', opacity: loading ? 0.6 : 1,
+      }}>
+        <GoogleIcon size={14} />
         {loading ? 'Connecting…' : 'Connect Google Calendar'}
-      </RoiButton>
-      {error && <div style={{ fontSize: 11, color: '#E23B3B', marginTop: 4 }}>{error}</div>}
+      </button>
+      {error && <div style={{ fontSize: 11, color: '#F7A521', marginTop: 4 }}>{error}</div>}
     </div>
   );
 }

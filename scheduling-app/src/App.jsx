@@ -16,43 +16,50 @@ export default function App() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Google Calendar auth bar — top-right corner */}
-      <div style={{
-        position: 'fixed', top: 12, right: 16, zIndex: 300,
-      }}>
-        <GoogleAuthButton
-          signedIn={auth.signedIn}
-          loading={auth.loading}
-          error={auth.error}
-          onSignIn={auth.signIn}
-          onSignOut={auth.signOut}
-        />
-      </div>
-
-      {/* Floating view switcher */}
+      {/* Bottom bar — view switcher + Google auth side by side */}
       <div style={{
         position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
-        zIndex: 200, display: 'flex', gap: 4,
-        background: 'rgba(17, 17, 17, 0.88)', backdropFilter: 'blur(12px)',
-        borderRadius: 999, padding: '6px 8px',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.32)',
+        zIndex: 200, display: 'flex', alignItems: 'center', gap: 8,
       }}>
-        {VIEWS.map(v => {
-          const active = view === v.id;
-          return (
-            <button key={v.id} onClick={() => setView(v.id)} style={{
-              padding: '8px 18px', borderRadius: 999, border: 0, cursor: 'pointer',
-              background: active ? '#fff' : 'transparent',
-              color: active ? '#111' : 'rgba(255,255,255,0.65)',
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontWeight: active ? 700 : 500, fontSize: 13,
-              transition: 'background 180ms ease, color 180ms ease',
-              whiteSpace: 'nowrap',
-            }}>
-              {v.label}
-            </button>
-          );
-        })}
+        {/* View switcher pill */}
+        <div style={{
+          display: 'flex', gap: 4,
+          background: 'rgba(17, 17, 17, 0.88)', backdropFilter: 'blur(12px)',
+          borderRadius: 999, padding: '6px 8px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.32)',
+        }}>
+          {VIEWS.map(v => {
+            const active = view === v.id;
+            return (
+              <button key={v.id} onClick={() => setView(v.id)} style={{
+                padding: '8px 18px', borderRadius: 999, border: 0, cursor: 'pointer',
+                background: active ? '#fff' : 'transparent',
+                color: active ? '#111' : 'rgba(255,255,255,0.65)',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontWeight: active ? 700 : 500, fontSize: 13,
+                transition: 'background 180ms ease, color 180ms ease',
+                whiteSpace: 'nowrap',
+              }}>
+                {v.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Google Calendar auth pill */}
+        <div style={{
+          background: 'rgba(17, 17, 17, 0.88)', backdropFilter: 'blur(12px)',
+          borderRadius: 999, padding: '6px 14px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.32)',
+        }}>
+          <GoogleAuthButton
+            signedIn={auth.signedIn}
+            loading={auth.loading}
+            error={auth.error}
+            onSignIn={auth.signIn}
+            onSignOut={auth.signOut}
+          />
+        </div>
       </div>
 
       {/* Active view */}
