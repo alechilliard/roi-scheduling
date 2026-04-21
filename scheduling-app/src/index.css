@@ -1,0 +1,48 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap");
+
+:root {
+  --roi-blue:      #0054D4;
+  --roi-cyan:      #009EE9;
+  --roi-gold:      #F7A521;
+  --roi-off-white: #F1F1F1;
+  --roi-black:     #111111;
+
+  --blue-50:  #E6F0FC;
+  --blue-700: #003A90;
+
+  --ink-900: #111111;
+  --ink-700: #3A3A3A;
+  --ink-500: #6B6B6B;
+  --ink-300: #B5B5B5;
+  --ink-100: #E9E9E9;
+  --ink-50:  #F1F1F1;
+
+  --grad-brand: linear-gradient(135deg, #009EE9 0%, #0054D4 100%);
+
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body:    "Figtree", "Avenir", system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink-900);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button { font-family: var(--font-body); }
+
+@keyframes roiFade    { from { opacity: 0 } to { opacity: 1 } }
+@keyframes roiSlideUp { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
