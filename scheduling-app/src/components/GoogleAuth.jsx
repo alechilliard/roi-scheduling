@@ -23,7 +23,9 @@ export function useGoogleAuth() {
   const [signedIn, setSignedIn] = useState(isTokenValid());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('roi_gcal_profile') || 'null'); } catch (_) { return null; }
+  });
 
   const signIn = async () => {
     setLoading(true); setError(null);
@@ -46,7 +48,9 @@ export function useGoogleAuth() {
                 const info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                   headers: { Authorization: `Bearer ${res.access_token}` },
                 }).then(r => r.json());
-                setProfile({ name: info.name, email: info.email, picture: info.picture });
+                const p = { name: info.name, email: info.email, picture: info.picture };
+                setProfile(p);
+                try { localStorage.setItem('roi_gcal_profile', JSON.stringify(p)); } catch (_) {}
               } catch (_) {}
               setSignedIn(true);
             }
@@ -63,6 +67,7 @@ export function useGoogleAuth() {
 
   const signOut = () => {
     clearToken();
+    try { localStorage.removeItem('roi_gcal_profile'); } catch (_) {}
     setSignedIn(false);
     setProfile(null);
   };

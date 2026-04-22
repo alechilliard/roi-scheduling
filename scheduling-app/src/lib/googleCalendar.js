@@ -118,14 +118,31 @@ export function buildGCalEvent(appt, agentName) {
 let _accessToken = null;
 let _tokenExpiry = 0;
 
+// Auto-restore from localStorage on module load
+try {
+  const t = localStorage.getItem('roi_gcal_token');
+  const e = Number(localStorage.getItem('roi_gcal_expiry'));
+  if (t && e && Date.now() < e) { _accessToken = t; _tokenExpiry = e; }
+} catch (_) {}
+
 export function setAccessToken(token, expiresIn) {
   _accessToken = token;
   _tokenExpiry = Date.now() + expiresIn * 1000 - 60_000; // 1-min buffer
+  try {
+    localStorage.setItem('roi_gcal_token', token);
+    localStorage.setItem('roi_gcal_expiry', String(_tokenExpiry));
+  } catch (_) {}
 }
 
 export function getAccessToken() { return _accessToken; }
 export function isTokenValid() { return !!_accessToken && Date.now() < _tokenExpiry; }
-export function clearToken() { _accessToken = null; _tokenExpiry = 0; }
+export function clearToken() {
+  _accessToken = null; _tokenExpiry = 0;
+  try {
+    localStorage.removeItem('roi_gcal_token');
+    localStorage.removeItem('roi_gcal_expiry');
+  } catch (_) {}
+}
 
 // ─── API calls ────────────────────────────────────────────────
 async function gcalFetch(path, options = {}) {
