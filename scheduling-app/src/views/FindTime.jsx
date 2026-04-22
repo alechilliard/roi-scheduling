@@ -1,13 +1,21 @@
-import { useState, useMemo } from 'react';
-import { TEAM, APPT_TYPE, DAY_START, DAY_END, fmtTime, fmtRange, buildWeek, seedAppointments, findFreeSlots, busyFor } from '../data/index.js';
+import { useState, useMemo, useEffect } from 'react';
+import { TEAM, APPT_TYPE, DAY_START, DAY_END, fmtTime, fmtRange, buildWeek, findFreeSlots, busyFor } from '../data/index.js';
+import { fetchWeekEvents } from '../lib/googleCalendar.js';
 import { RoiButton, Eyebrow, Avatar, AvatarStack, RoiLogo, RoiIconMark, Icon, useIsMobile } from '../components/ui.jsx';
 import { BookingModal } from '../components/BookingModal.jsx';
 
-export function FindTime() {
+export function FindTime({ auth }) {
   const isMobile = useIsMobile();
-  const week = useMemo(() => buildWeek(new Date('2026-04-22')), []);
-  const todayKey = week[2].key;
-  const [appts, setAppts] = useState(() => seedAppointments(week.map(w => w.key)));
+  const week = useMemo(() => buildWeek(new Date()), []);
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const todayKey = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const [appts, setAppts] = useState([]);
+
+  useEffect(() => {
+    if (!auth?.signedIn) return;
+    fetchWeekEvents(week.map(w => w.key)).then(setAppts).catch(console.error);
+  }, [auth?.signedIn, week]);
   const [selected, setSelected] = useState(() => new Set(TEAM.map(p => p.id)));
   const [dayKey, setDayKey] = useState(todayKey);
   const [duration, setDuration] = useState(90);
@@ -67,8 +75,12 @@ export function FindTime() {
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 16, position: 'relative' }}>
           <RoiLogo color="#fff" size={isMobile ? 14 : 18} />
           <div style={{ flex: 1 }} />
-          {!isMobile && <button style={{ background: 'rgba(255,255,255,0.18)', border: 0, padding: '8px 14px', borderRadius: 999, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: 13 }}>Schedule</button>}
-          <Avatar person={TEAM[0]} size={isMobile ? 30 : 36} style={{ boxShadow: '0 0 0 2px rgba(255,255,255,0.4)' }} />
+          {auth?.profile?.picture ? (
+            <img src={auth.profile.picture} alt={auth.profile.name || 'User'}
+              style={{ width: isMobile ? 30 : 36, height: isMobile ? 30 : 36, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 0 0 2px rgba(255,255,255,0.4)' }} />
+          ) : (
+            <Avatar person={TEAM[0]} size={isMobile ? 30 : 36} style={{ boxShadow: '0 0 0 2px rgba(255,255,255,0.4)' }} />
+          )}
         </div>
 
         <div style={{ maxWidth: 1200, margin: isMobile ? '12px auto 0' : '36px auto 0', position: 'relative' }}>

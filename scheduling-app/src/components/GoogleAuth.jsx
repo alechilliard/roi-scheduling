@@ -3,7 +3,7 @@ import { setAccessToken, clearToken, isTokenValid } from '../lib/googleCalendar.
 import { RoiButton, Icon } from './ui.jsx';
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
 let _tokenClient = null;
 
@@ -23,6 +23,7 @@ export function useGoogleAuth() {
   const [signedIn, setSignedIn] = useState(isTokenValid());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [profile, setProfile] = useState(null);
 
   const signIn = async () => {
     setLoading(true); setError(null);
@@ -36,11 +37,17 @@ export function useGoogleAuth() {
         _tokenClient = window.google.accounts.oauth2.initTokenClient({
           client_id: CLIENT_ID,
           scope: SCOPES,
-          callback: (res) => {
+          callback: async (res) => {
             if (res.error) {
               setError(res.error);
             } else {
               setAccessToken(res.access_token, res.expires_in);
+              try {
+                const info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                  headers: { Authorization: `Bearer ${res.access_token}` },
+                }).then(r => r.json());
+                setProfile({ name: info.name, email: info.email, picture: info.picture });
+              } catch (_) {}
               setSignedIn(true);
             }
             setLoading(false);
@@ -57,9 +64,10 @@ export function useGoogleAuth() {
   const signOut = () => {
     clearToken();
     setSignedIn(false);
+    setProfile(null);
   };
 
-  return { signedIn, loading, error, signIn, signOut };
+  return { signedIn, loading, error, signIn, signOut, profile };
 }
 
 export function GoogleAuthButton({ signedIn, loading, error, onSignIn, onSignOut, compact = false }) {

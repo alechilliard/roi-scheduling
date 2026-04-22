@@ -1,17 +1,25 @@
-import { useState, useMemo, useRef } from 'react';
-import { TEAM, APPT_TYPES, APPT_TYPE, DAY_START, DAY_END, SLOT, fmtTime, fmtRange, buildWeek, seedAppointments } from '../data/index.js';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { TEAM, APPT_TYPES, APPT_TYPE, DAY_START, DAY_END, SLOT, fmtTime, fmtRange, buildWeek } from '../data/index.js';
+import { fetchWeekEvents } from '../lib/googleCalendar.js';
 import { RoiButton, Eyebrow, Avatar, RoiLogo, Icon, useIsMobile } from '../components/ui.jsx';
 import { BookingModal } from '../components/BookingModal.jsx';
 
 const SLOT_PX = 72;
 
-export function TeamRows() {
+export function TeamRows({ auth }) {
   const isMobile = useIsMobile();
-  const week = useMemo(() => buildWeek(new Date('2026-04-22')), []);
-  const todayKey = week[2].key;
+  const week = useMemo(() => buildWeek(new Date()), []);
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const todayKey = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
   const [dayKey, setDayKey] = useState(todayKey);
-  const [appts, setAppts] = useState(() => seedAppointments(week.map(w => w.key)));
+  const [appts, setAppts] = useState([]);
   const [modal, setModal] = useState({ open: false, draft: null });
+
+  useEffect(() => {
+    if (!auth?.signedIn) return;
+    fetchWeekEvents(week.map(w => w.key)).then(setAppts).catch(console.error);
+  }, [auth?.signedIn, week]);
 
   const dayAppts = appts.filter(a => a.dayKey === dayKey);
   const dayObj = week.find(w => w.key === dayKey);
@@ -40,24 +48,13 @@ export function TeamRows() {
       <header style={{ background: 'linear-gradient(135deg, #009EE9 0%, #0054D4 100%)', color: '#fff', padding: isMobile ? '14px 16px 18px' : '18px 32px 22px' }}>
         <div style={{ maxWidth: 1440, margin: '0 auto', display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 20 }}>
           <RoiLogo color="#fff" size={isMobile ? 14 : 18} />
-          {!isMobile && (
-            <div style={{ flex: 1, display: 'flex', gap: 4 }}>
-              {['Schedule', 'Leads', 'Properties', 'Reports'].map((n, i) => (
-                <button key={n} style={{
-                  padding: '8px 14px', background: i === 0 ? 'rgba(255,255,255,0.18)' : 'transparent',
-                  color: '#fff', border: 0, borderRadius: 999, cursor: 'pointer',
-                  fontFamily: 'inherit', fontWeight: 600, fontSize: 13,
-                }}>{n}</button>
-              ))}
-            </div>
-          )}
           <div style={{ flex: 1 }} />
-          {!isMobile && (
-            <button style={{ background: 'rgba(255,255,255,0.15)', border: 0, width: 36, height: 36, borderRadius: 18, cursor: 'pointer', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="bell" size={18} />
-            </button>
+          {auth?.profile?.picture ? (
+            <img src={auth.profile.picture} alt={auth.profile.name || 'User'}
+              style={{ width: isMobile ? 30 : 36, height: isMobile ? 30 : 36, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 0 0 2px rgba(255,255,255,0.5)' }} />
+          ) : (
+            <Avatar person={TEAM[0]} size={isMobile ? 30 : 36} style={{ boxShadow: '0 0 0 2px rgba(255,255,255,0.5)' }} />
           )}
-          <Avatar person={TEAM[0]} size={isMobile ? 30 : 36} style={{ boxShadow: '0 0 0 2px rgba(255,255,255,0.5)' }} />
         </div>
 
         <div style={{ maxWidth: 1440, margin: isMobile ? '14px auto 0' : '28px auto 0', display: 'flex', alignItems: 'flex-end', gap: 16, justifyContent: 'space-between' }}>

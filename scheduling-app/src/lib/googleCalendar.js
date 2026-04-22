@@ -1,7 +1,5 @@
 // Google Calendar integration — follows The ROI Guys Calendar SOP.
-// Uses Google Identity Services (browser OAuth) + Calendar API v3.
-//
-// Setup: copy .env.example to .env and fill in your credentials.
+import { TEAM } from '../data/index.js';
 
 // ─── Calendar IDs ──────────────────────────────────────────────
 // Find these in Google Calendar → Settings → [Calendar name] → Calendar ID
@@ -112,7 +110,7 @@ export function buildGCalEvent(appt, agentName) {
     // Busy = blocks time, Free = informational only (time off)
     transparency: appt.type === 'blocked' ? 'transparent' : 'opaque',
     // Store our internal ID in extendedProperties so we can update later
-    extendedProperties: { private: { roiApptId: appt.id || '' } },
+    extendedProperties: { private: { roiApptId: appt.id || '', personId: appt.personId || '', apptType: appt.type || '' } },
   };
 }
 
@@ -176,4 +174,62 @@ export async function deleteEvent(appt, gcalEventId) {
   await gcalFetch(`/calendars/${encodeURIComponent(calId)}/events/${gcalEventId}`, {
     method: 'DELETE',
   });
+}
+
+// Fetch all events for the given week (array of YYYY-MM-DD strings) from all configured calendars.
+export async function fetchWeekEvents(weekKeys) {
+  if (!isTokenValid()) return [];
+  const timeMin = new Date(weekKeys[0] + 'T00:00:00').toISOString();
+  const timeMax = new Date(weekKeys[weekKeys.length - 1] + 'T23:59:59').toISOString();
+
+  const cals = [
+    { id: CALENDAR_IDS.showings, defaultType: 'walkthrough' },
+    { id: CALENDAR_IDS.main,     defaultType: 'internal' },
+    { id: CALENDAR_IDS.timeOff,  defaultType: 'blocked' },
+  ].filter(c => c.id);
+
+  const all = [];
+  for (const cal of cals) {
+    try {
+      const params = new URLSearchParams({ timeMin, timeMax, singleEvents: 'true', orderBy: 'startTime', maxResults: '250' });
+      const data = await gcalFetch(`/calendars/${encodeURIComponent(cal.id)}/events?${params}`);
+      for (const ev of (data.items || [])) {
+        const parsed = _parseEvent(ev, cal.defaultType);
+        if (parsed) all.push(parsed);
+      }
+    } catch (e) {
+      console.warn(`Calendar fetch failed for ${cal.id}:`, e.message);
+    }
+  }
+  return all;
+}
+
+function _parseEvent(ev, defaultType) {
+  if (!ev.start?.dateTime) return null; // skip all-day events
+  const startDt = new Date(ev.start.dateTime);
+  const endDt   = new Date(ev.end.dateTime);
+  const dayKey  = ev.start.dateTime.slice(0, 10);
+  const start   = startDt.getHours() * 60 + startDt.getMinutes();
+  const end     = endDt.getHours()   * 60 + endDt.getMinutes();
+
+  // Prefer personId stored by our app, else match attendees, else parse title
+  let personId = ev.extendedProperties?.private?.personId || null;
+  if (!personId) {
+    for (const [pid, email] of Object.entries(TEAM_EMAILS)) {
+      if (email && ev.attendees?.some(a => a.email === email)) { personId = pid; break; }
+    }
+  }
+  if (!personId && ev.summary) {
+    const lower = ev.summary.toLowerCase();
+    for (const p of TEAM) {
+      if (lower.startsWith(p.name.toLowerCase())) { personId = p.id; break; }
+    }
+  }
+  if (!personId) return null;
+
+  const type = ['walkthrough','followup','internal','blocked'].includes(ev.extendedProperties?.private?.apptType)
+    ? ev.extendedProperties.private.apptType
+    : defaultType;
+
+  return { id: ev.id, gcalEventId: ev.id, dayKey, personId, start, end, type, title: ev.summary || 'Appointment', address: ev.location || '' };
 }

@@ -65,9 +65,9 @@ export default function App() {
 
       {/* Active view */}
       <div style={{ flex: 1, overflow: 'auto' }}>
-        {view === 'rows'    && <TeamRows />}
-        {view === 'stacked' && <StackedDay />}
-        {view === 'find'    && <FindTime />}
+        {view === 'rows'    && <TeamRows auth={auth} />}
+        {view === 'stacked' && <StackedDay auth={auth} />}
+        {view === 'find'    && <FindTime auth={auth} />}
       </div>
     </div>
   );

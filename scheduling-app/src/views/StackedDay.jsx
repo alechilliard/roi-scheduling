@@ -1,17 +1,25 @@
-import { useState, useMemo, useRef } from 'react';
-import { TEAM, APPT_TYPE, DAY_START, DAY_END, fmtTime, fmtRange, buildWeek, seedAppointments } from '../data/index.js';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { TEAM, APPT_TYPE, DAY_START, DAY_END, fmtTime, fmtRange, buildWeek } from '../data/index.js';
+import { fetchWeekEvents } from '../lib/googleCalendar.js';
 import { RoiButton, Eyebrow, Avatar, RoiLogo, Icon, useIsMobile } from '../components/ui.jsx';
 import { BookingModal } from '../components/BookingModal.jsx';
 
 const HOUR_PX = 96;
 
-export function StackedDay() {
+export function StackedDay({ auth }) {
   const isMobile = useIsMobile();
-  const week = useMemo(() => buildWeek(new Date('2026-04-22')), []);
-  const todayKey = week[2].key;
+  const week = useMemo(() => buildWeek(new Date()), []);
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const todayKey = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
   const [dayKey, setDayKey] = useState(todayKey);
-  const [appts, setAppts] = useState(() => seedAppointments(week.map(w => w.key)));
+  const [appts, setAppts] = useState([]);
   const [visible, setVisible] = useState(() => new Set(TEAM.map(p => p.id)));
+
+  useEffect(() => {
+    if (!auth?.signedIn) return;
+    fetchWeekEvents(week.map(w => w.key)).then(setAppts).catch(console.error);
+  }, [auth?.signedIn, week]);
   const [modal, setModal] = useState({ open: false, draft: null });
 
   const dayAppts = appts.filter(a => a.dayKey === dayKey && visible.has(a.personId));
@@ -44,28 +52,6 @@ export function StackedDay() {
             padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24, flexShrink: 0,
           }}>
             <RoiLogo color="#0054D4" size={16} />
-
-            <div>
-              <Eyebrow>Navigation</Eyebrow>
-              <div style={{ display: 'flex', flexDirection: 'column', marginTop: 10, gap: 2 }}>
-                {[
-                  { icon: 'calendar', label: 'Schedule', active: true },
-                  { icon: 'users',    label: 'Team' },
-                  { icon: 'home',     label: 'Properties' },
-                  { icon: 'sparkle',  label: 'Reports' },
-                ].map(n => (
-                  <button key={n.label} style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
-                    borderRadius: 10, border: 0, cursor: 'pointer',
-                    background: n.active ? '#E6F0FC' : 'transparent',
-                    color: n.active ? '#0054D4' : '#3A3A3A',
-                    fontFamily: 'inherit', fontWeight: 600, fontSize: 14, textAlign: 'left',
-                  }}>
-                    <Icon name={n.icon} size={18} />{n.label}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div>
               <Eyebrow>Agents</Eyebrow>
